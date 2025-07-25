@@ -3,7 +3,7 @@ name: Get Deployment Details
 on:
   push:
     branches:
-      - main
+      - canary
 
 jobs:
   get-deployment-details:
