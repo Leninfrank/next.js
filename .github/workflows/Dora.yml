@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-get-dora:
-runs-on: ubuntu-latest
+  get-dora:
+    runs-on: ubuntu-latest
 
 steps:  
   - name: Checkout  
