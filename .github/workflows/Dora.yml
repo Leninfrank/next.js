@@ -9,49 +9,47 @@ jobs:
   get-dora:
     runs-on: ubuntu-latest
 
-steps:  
-  - name: Checkout  
-    uses: actions/checkout@v3  
+    steps:  
+      - name: Checkout  
+        uses: actions/checkout@v3  
 
-  - name: Get DORA Metrics  
-    env:  
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
-      REPO: ${{ github.repository }}  
-    run: |  
-      echo "Fetching deployments for $REPO..."  
+      - name: Get DORA Metrics  
+        env:  
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
+          REPO: ${{ github.repository }}  
+        run: |  
+          echo "Fetching deployments for $REPO..."  
 
-      curl -s -H "Authorization: token $GITHUB_TOKEN" \  
-        "https://api.github.com/repos/$REPO/deployments?per_page=100" > deployments.json  
+          curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$REPO/deployments?per_page=100" > deployments.json  
 
-      DEPLOYMENT_IDS=$(jq '.[].id' deployments.json)  
-      echo "Found $(echo "$DEPLOYMENT_IDS" | wc -l) deployments"  
+          DEPLOYMENT_IDS=$(jq '.[].id' deployments.json)  
+          echo "Found $(echo "$DEPLOYMENT_IDS" | wc -l) deployments"  
 
-      SUCCESS=0  
-      FAILURE=0  
-      TOTAL=0  
+          SUCCESS=0  
+          FAILURE=0  
+          TOTAL=0  
 
-      for id in $DEPLOYMENT_IDS; do  
-        STATUS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \  
-          "https://api.github.com/repos/$REPO/deployments/$id/statuses" | jq -r '.[0].state')  
-        TOTAL=$((TOTAL + 1))  
-        if [[ "$STATUS" == "success" ]]; then  
-          SUCCESS=$((SUCCESS + 1))  
-        elif [[ "$STATUS" == "failure" || "$STATUS" == "error" ]]; then  
-          FAILURE=$((FAILURE + 1))  
-        fi  
-      done  
+          for id in $DEPLOYMENT_IDS; do  
+            STATUS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/$REPO/deployments/$id/statuses" | jq -r '.[0].state')  
+            TOTAL=$((TOTAL + 1))  
+            if [[ "$STATUS" == "success" ]]; then  
+              SUCCESS=$((SUCCESS + 1))  
+            elif [[ "$STATUS" == "failure" || "$STATUS" == "error" ]]; then  
+              FAILURE=$((FAILURE + 1))  
+            fi  
+          done  
 
-      CFR=$(awk "BEGIN {print $FAILURE / ($TOTAL == 0 ? 1 : $TOTAL)}")  
+          CFR=$(awk "BEGIN {print $FAILURE / ($TOTAL == 0 ? 1 : $TOTAL)}")  
 
-      echo "Total deployments: $TOTAL"  
-      echo "Successful: $SUCCESS"  
-      echo "Failed: $FAILURE"  
-      echo "Change Failure Rate: $CFR"  
+          echo "Total deployments: $TOTAL"  
+          echo "Successful: $SUCCESS"  
+          echo "Failed: $FAILURE"  
+          echo "Change Failure Rate: $CFR"  
 
-      echo "{\"timestamp\": \"$(date -u +%FT%TZ)\", \"total\": $TOTAL, \"failed\": $FAILURE, \"success\": $SUCCESS, \"cfr\": $CFR}" > dora-metrics.json  
+          echo "{\"timestamp\": \"$(date -u +%FT%TZ)\", \"total\": $TOTAL, \"failed\": $FAILURE, \"success\": $SUCCESS, \"cfr\": $CFR}" > dora-metrics.json  
         
-  - name: Upload DORA metrics artifact  
-    uses: actions/upload-artifact@v4  
-    with:  
-      name: dora-metrics  
-      path: dora-metrics.json
+      - name: Upload DORA metrics artifact  
+        uses: actions/upload-artifact@v4  
+        with:  
+          name: dora-metrics  
+          path: dora-metrics.json
