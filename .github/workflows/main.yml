@@ -1,0 +1,18 @@
+name: Get Deployment Details
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  get-deployment-details:
+    run-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Print deployment details
+        run: |
+          echo "Repository: $({github.repository})"
+          echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
